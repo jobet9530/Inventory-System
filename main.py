@@ -1,7 +1,8 @@
-from flask import Flask, request, render_template, url_for, redirect
+from flask import Flask, request, render_template, url_for, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import bleach
 import bcrypt
+from flask_login import login_user, logout_user, login_required, current_user
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///inventory.db"
@@ -179,23 +180,31 @@ def index():
         product_name = request.form['product_name']
         new_product = Product(product_id=product_name)
 
+        response = product_response(jsonify(message="Product Added succesfully", 200))
+
+        return response
+
         try:
             db.session.add(new_product)
             db.session.commit()
             return redirect('/')
         except:
-            return 'There was an issue adding your product'
+            response_fail = product_response(jsonify(message="There was an issue adding your product", 500))
+            return response_fail
 
     if (request.method == 'POST') and ('warehouse_name' in request.form):
         warehouse_name = request.form['warehouse_name']
         new_warehouse = Warehouse(warehouse_id=warehouse_name)
+
+        response = warehouse_response(jsonify(message="Warehouse Added succesfully", 200))
 
         try:
             db.session.add(new_warehouse)
             db.session.commit()
             return redirect('/')
         except:
-            return 'There was an issue adding your warehouse'
+            response_fail = warehouse_response(jsonify(message="There was an issue adding your warehouse", 500))
+            return response_fail
 
     else:
         products = Product.query.all()
@@ -217,12 +226,17 @@ def users():
         new_user = Customer(user_id=customer_name, username=username,
                             password_hash=hashed_password, role=role)
 
+        response = user_response(jsonify(message="User Added succesfully", 200))
+
+        return response
+
         try:
             db.session.add(new_user)
             db.session.commit()
             return redirect('/users')
         except:
-            return 'There was an issue adding your customer'
+            response_fail = user_response(jsonify(message="There was an issue adding your customer", 500))
+            return response_fail
 
     if (request.method == 'POST') and ('password' in request.form):
         username = bleach.clean(request.form['username'])
