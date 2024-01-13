@@ -251,5 +251,16 @@ def users():
             return 'Invalid username or password'
 
 
+@app.route("/logout/", method=['POST'])
+def logout():
+    try:
+        response = logout_response(jsonify(message="Logged out succesfully", 200))
+        response.set_cookie('session_cookie', expires=0)
+        return redirect(url_for('login'))
+    except:
+        response_fail = logout_response(jsonify(message="There was an issue logging out", 500))
+        return response_fail
+
+
 if __name__ == "__main__":
     app.run()
