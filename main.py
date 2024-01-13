@@ -268,7 +268,22 @@ def customer():
     if (request.method == 'POST') and ('customer_name' in request.form):
         customer_name = request.form['customer_name']
         email = request.form['email']
-        phone
+        phone_number = request.form['phone_number']
+        address = request.form['address']
+
+        new_customer = Customer(
+            user_id=customer_name, email=email, phone_number=phone_number, address=address)
+
+        response = customer_response(jsonify(message="Customer Added succesfully", 200))
+        return response
+
+        try:
+            db.session.add(new_customer)
+            db.session.commit()
+            return redirect('/customer')
+        except:
+            response_fail = customer_response(jsonify(message="There was an issue adding your customer", 500))
+            return response_fail
 
 
 if __name__ == "__main__":
