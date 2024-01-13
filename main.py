@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, url_for
+from flask import Flask, request, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -13,6 +13,10 @@ class Product(db.Model):
     stock_quantity = db.Column(db.Integer, nullable=False)
     barcode = db.Column(db.Text, unique=True)
     category = db.Column(db.Text)
+    description = db.Column(db.Text)
+
+    def __repr__(self):
+        return f'<Product {self.product_name}>'
 
 
 class Customer(db.Model):
@@ -21,6 +25,9 @@ class Customer(db.Model):
     email = db.Column(db.Text)
     phone_number = db.Column(db.Text)
     address = db.Column(db.Text)
+
+    def __repr__(self):
+        return f'<Customer {self.customer_name}>'
 
 
 class Sale(db.Model):
@@ -36,6 +43,9 @@ class Sale(db.Model):
     customer = db.relationship('Customer', backref='sales')
     user = db.relationship('User', backref='sales')
 
+    def __repr__(self):
+        return f'<Sale {self.sale_id}>'
+
 
 class SaleItem(db.Model):
     sale_item_id = db.Column(db.Integer, primary_key=True)
@@ -47,6 +57,9 @@ class SaleItem(db.Model):
     sale = db.relationship('Sale', backref='items')
     product = db.relationship('Product', backref='sales')
 
+    def __repr__(self):
+        return f'<SaleItem {self.sale_item_id}>'
+
 
 class User(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'))
@@ -56,6 +69,9 @@ class User(db.Model):
     password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.Text, default='user')
     customer = db.relationship('Customer', backref='users')
+
+    def __repr__(self):
+        return f'<User {self.username}>'
 
 
 class Order(db.Model):
@@ -70,6 +86,9 @@ class Order(db.Model):
     customer = db.relationship('Customer', backref='orders')
     user = db.relationship('User', backref='orders')
 
+    def __repr__(self):
+        return f'<Order {self.order_id}>'
+
 
 class OrderItem(db.Model):
     order_item_id = db.Column(db.Integer, primary_key=True)
@@ -81,6 +100,9 @@ class OrderItem(db.Model):
     order = db.relationship('Order', backref='items')
     product = db.relationship('Product', backref='orders')
 
+    def __repr__(self):
+        return f'<OrderItem {self.order_item_id}>'
+
 
 class Warehouse(db.Model):
     warehouse_id = db.Column(db.Integer, primary_key=True)
@@ -88,6 +110,9 @@ class Warehouse(db.Model):
     warehouse_address = db.Column(db.Text)
     warehouse_phone_number = db.Column(db.Text)
     warehouse_email = db.Column(db.Text)
+
+    def __repr__(self):
+        return f'<Warehouse {self.warehouse_name}>'
 
 
 class WarehouseItem(db.Model):
@@ -98,6 +123,9 @@ class WarehouseItem(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     warehouse = db.relationship('Warehouse', backref='items')
     product = db.relationship('Product', backref='warehouses')
+
+    def __repr__(self):
+        return f'<WarehouseItem {self.warehouse_item_id}>'
 
 
 class MonthlySales(db.Model):
@@ -115,6 +143,9 @@ class MonthlySales(db.Model):
     revenue_per_product = db.Column(db.Float, nullable=False)
     profit_per_product = db.Column(db.Float, nullable=False)
 
+    def __repr__(self):
+        return f'<MonthlySales {self.month}>'
+
 
 class InactiveAccount(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(
@@ -123,6 +154,9 @@ class InactiveAccount(db.Model):
     email = db.Column(db.Text, nullable=False)
     password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.Text, default='user')
+
+    def __repr__(self):
+        return f'<InactiveAccount {self.username}>'
 
 
 class Delivery(db.Model):
@@ -133,10 +167,38 @@ class Delivery(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('order.order_id'))
     order = db.relationship('Order', backref='deliveries')
 
+    def __repr__(self):
+        return f'<Delivery {self.delivery_id}>'
 
-@app.route("/")
-def hello_world():
-    return "Hello, World!"
+
+@app.route("/, methods=['GET','POST']")
+def index():
+    if (request.method == 'POST') and ('product_name' in request.form):
+        product_name = request.form['product_name']
+        new_product = Product(product_id=product_name)
+
+        try:
+            db.session.add(new_product)
+            db.session.commit()
+            return redirect('/')
+        except:
+            return 'There was an issue adding your product'
+
+    if (request.method == 'POST') and ('warehouse_name' in request.form):
+        warehouse_name = request.form['warehouse_name']
+        new_warehouse = Warehouse(warehouse_id=warehouse_name)
+
+        try:
+            db.session.add(new_warehouse)
+            db.session.commit()
+            return redirect('/')
+        except:
+            return 'There was an issue adding your warehouse'
+
+    else:
+        products = Product.query.all()
+        warehouses = Warehouse.query.all()
+        return render_template('index.html', products=products, warehouses=warehouses)
 
 
 if __name__ == "__main__":
