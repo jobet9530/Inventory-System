@@ -253,6 +253,7 @@ def users():
 
 @app.route("/logout/", method=['POST'])
 def logout():
+    logout_user()
     try:
         response = logout_response(jsonify(message="Logged out succesfully", 200))
         response.set_cookie('session_cookie', expires=0)
@@ -260,6 +261,14 @@ def logout():
     except:
         response_fail = logout_response(jsonify(message="There was an issue logging out", 500))
         return response_fail
+
+
+@app.route("/customer/", method=['GET', 'POST'])
+def customer():
+    if (request.method == 'POST') and ('customer_name' in request.form):
+        customer_name = request.form['customer_name']
+        email = request.form['email']
+        phone
 
 
 if __name__ == "__main__":
