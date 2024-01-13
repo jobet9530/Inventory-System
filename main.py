@@ -1,5 +1,7 @@
 from flask import Flask, request, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
+import bleach
+import bcrypt
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///inventory.db"
@@ -199,6 +201,40 @@ def index():
         products = Product.query.all()
         warehouses = Warehouse.query.all()
         return render_template('index.html', products=products, warehouses=warehouses)
+
+
+@app.route("/users/", methods=['GET', 'POST'])
+def users():
+    if (request.method == 'POST') and ('username' in request.form):
+        customer_name = request.form['customer_name']
+        username = bleach.clean(request.form['username'])
+        password_hash = bleach.clean(request.form['password_hash'])
+        role = request.form['role']
+
+        hashed_password = bcrypt.hashpw(password_hash.encode(
+            'utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        new_user = Customer(user_id=customer_name, username=username,
+                            password_hash=hashed_password, role=role)
+
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            return redirect('/users')
+        except:
+            return 'There was an issue adding your customer'
+
+    if (request.method == 'POST') and ('password' in request.form):
+        username = bleach.clean(request.form['username'])
+        password_hash = bleach.clean(request.form['password_hash'])
+
+        user = User.query.filter_by(username=username).first()
+
+        if user and bcrypt.checkpw(password_hash.encode('utf-8'), user.password_hash.encode('utf-8')):
+            login_user(user)
+            return redirect('/users')
+        else:
+            return 'Invalid username or password'
 
 
 if __name__ == "__main__":
