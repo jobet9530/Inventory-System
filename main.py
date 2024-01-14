@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import bleach
 import bcrypt
 from flask_login import login_user, logout_user, login_required, current_user
+import automation
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///inventory.db"
@@ -288,9 +289,15 @@ def customer():
             return response_fail
 
 
+def calculate_total_cost(quantity, price):
+    total_amount = quantity * price
+    return total_amount
+
+
 @app.route('/orders/', method=['GET', 'POST'])
 def orders():
 
+    order_data = request.get_json()
     if (request.method == 'POST') and ('order_date' in request.form):
 
         order_date = request.form['order_date']
