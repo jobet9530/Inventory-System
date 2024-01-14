@@ -80,8 +80,10 @@ class User(db.Model):
 class Order(db.Model):
     order_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.product_id'))
     order_date = db.Column(
         db.TIMESTAMP, server_default=db.func.current_timestamp())
+    quantity = db.Column(db.Integer, nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
     payment_method = db.Column(db.Text)
     notes = db.Column(db.Text)
@@ -283,6 +285,34 @@ def customer():
             return redirect('/customer')
         except:
             response_fail = customer_response(jsonify(message="There was an issue adding your customer", 500))
+            return response_fail
+
+
+@app.route('/orders/', method=['GET', 'POST'])
+def orders():
+
+    if (request.method == 'POST') and ('order_date' in request.form):
+
+        order_date = request.form['order_date']
+        quantity = request.form['quantity']
+        total_amount = request.form['total_amount']
+        product_name = request.form['product_name']
+        customer_name = request.form['customer_name']
+        payment_method = request.form['payment_method']
+        notes = request.form['notes']
+
+        new_order = Order(order_date=order_date, quantity=quantity, total_amount=total_amount,
+                          product_id=product_name, customer_id=customer_name, payment_method=payment_method, notes=notes)
+
+        response = order_response(jsonify(message="Order Added succesfully", 200))
+        return response
+
+        try:
+            db.session.add(new_order)
+            db.session.commit()
+            return redirect('/orders')
+        except:
+            response_fail = order_response(jsonify(message="There was an issue adding your order", 500))
             return response_fail
 
 
