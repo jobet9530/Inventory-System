@@ -311,10 +311,12 @@ def orders():
         new_order = Order(order_date=order_date, quantity=quantity, total_amount=total_amount,
                           product_id=product_name, customer_id=customer_name, payment_method=payment_method, notes=notes)
 
-        response = order_response(jsonify(message="Order Added succesfully", 200))
+        response = order_response(jsonify(message="Order Added succesfully", total_amount=total_amount, 200))
         return response
 
         try:
+            total_amount = automation.calculate_total_cost(
+                order_data['quantity'], order_data['price'])
             db.session.add(new_order)
             db.session.commit()
             return redirect('/orders')
